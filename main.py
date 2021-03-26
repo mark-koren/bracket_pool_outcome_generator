@@ -130,7 +130,7 @@ def get_outcome_matrix():
 st.title('So you\'re saying there\'s a chance!?!')
 st.header('Bracket pool outcome generator')
 st.subheader('By: Mark Koren')
-st.markdown('[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/L4L242M4H)')
+# st.markdown('[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/L4L242M4H)')
 
 
 st.header('1. Generate Bracket Pool Data')
@@ -190,7 +190,7 @@ if generated_pdf_dir and pdfs_filepath is not None and dir_filepath is not None:
     if csv_filepath is not None:
         # TODO: Add progress bar
         try:
-            bracket_list, bracket_matrix, current_score_array = load_or_generate_bracket_data(pdfs_filepath, force_generation=force_generation)
+            bracket_list, bracket_matrix, current_score_array = load_or_generate_bracket_data(pdfs_filepath, pool_type=pool_type, force_generation=force_generation)
             print(bracket_list)
 
             bracket_list_path = pdfs_filepath.joinpath('bracket_list.pkl')

@@ -175,7 +175,7 @@ def get_bracket_array(bracket_dict):
     # return bracket_array.astype(int)
     return bracket_array.reshape((1,-1)).astype(int)
 
-def generate_bracket_data_from_directory(dir_path):
+def generate_bracket_data_from_directory(dir_path, pool_type='CBS'):
         dirpath = Path(dir_path)
         assert (dirpath.is_dir())
 
@@ -187,7 +187,7 @@ def generate_bracket_data_from_directory(dir_path):
         pdf_files = dirpath.glob('*.pdf')
         for bracket_idx, pdf_file in enumerate(pdf_files):
             try:
-                bracket_dict = get_bracket_dict(pdf_file)
+                bracket_dict = get_bracket_dict(pdf_file, pool_type=pool_type)
                 bracket_name = pdf_file.stem
                 if bracket_name == 'sue_koren':
                     bracket_dict[14] = 'gonzaga'
@@ -294,14 +294,14 @@ def load_bracket_data(bracket_dir_path):
 
     return bracket_list, bracket_matrix, current_score_array
 
-def load_or_generate_bracket_data(bracket_dir_path, force_generation=False):
+def load_or_generate_bracket_data(bracket_dir_path, pool_type='CBS', force_generation=False):
     try:
         print(force_generation)
         assert not force_generation
         bracket_list, bracket_matrix, current_score_array = load_bracket_data(bracket_dir_path)
     except:
         print('Failed to load bracket pool data -- generating and saving new bracket pool data')
-        bracket_list, bracket_matrix, current_score_array = generate_bracket_data_from_directory(bracket_dir_path)
+        bracket_list, bracket_matrix, current_score_array = generate_bracket_data_from_directory(bracket_dir_path, pool_type=pool_type)
         save_bracket_data(bracket_dir_path, bracket_list, bracket_matrix, current_score_array)
     finally:
         return bracket_list, bracket_matrix, current_score_array
