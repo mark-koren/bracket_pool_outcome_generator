@@ -17,13 +17,13 @@ from pages.utils import page_header, downloads_path, upload_folder, save_uploade
 from source.utils import generate_round_array
 
 
-def individual_brackets(bracket_list, bracket_matrix, current_score_array, df_bracket_pool):
+def individual_brackets(bracket_list, bracket_matrix, current_score_array, df_bracket_pool, score_array):
     page_header()
 
     if bracket_list is not None and bracket_matrix is not None and current_score_array is not None:
         st.header('4.0 Individual Brackets')
 
-        outcome_matrix = get_outcome_matrix()
+        outcome_matrix = get_outcome_matrix(score_array)
         selected_outcome_matrix = outcome_matrix.copy()
 
         bracket_name = st.selectbox('Select a row to edit: ', df_bracket_pool.loc[:, 'name'].tolist())
@@ -82,7 +82,7 @@ def individual_brackets(bracket_list, bracket_matrix, current_score_array, df_br
                     winner_dict[i] = winner
 
 
-            score_array = np.array([4,8,16,32])
+            # score_array = np.array([4,8,16,32])
             for i in range(15):
                 winner_key = winner_dict[i]
                 if winner_key is not None:

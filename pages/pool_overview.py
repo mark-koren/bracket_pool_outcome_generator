@@ -19,13 +19,14 @@ from source.utils import generate_round_array
 
 
 
-def pool_overview(bracket_list, bracket_matrix, current_score_array, df_bracket_pool):
+def pool_overview(bracket_list, bracket_matrix, current_score_array, df_bracket_pool, score_array):
     page_header()
 
     if bracket_list is not None and bracket_matrix is not None and current_score_array is not None:
         st.header('3.0 Bracket Pool Results')
 
-        outcome_matrix = get_outcome_matrix()
+        outcome_matrix = get_outcome_matrix(score_array)
+        # print(outcome_matrix)
         selected_outcome_matrix = outcome_matrix.copy()
         data_mode = st.selectbox('What do you want to do with the bracket pool data?',
                                  ['Inspect Data', 'Look at Scenarios'])

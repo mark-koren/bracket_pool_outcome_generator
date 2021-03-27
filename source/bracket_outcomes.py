@@ -25,11 +25,12 @@ def bracket_truth_table_generator(num_teams):
 	# max_games_per_team = int(np.log2(num_teams))
 	return itertools.product(single_game_outcome, repeat=total_games)
 
-def generate_outcome_matrix(num_teams):
+def generate_outcome_matrix(num_teams, score_array=None):
 	# num_teams = 16
 	round_array = generate_round_array(num_teams)
 	game_pointer_array, round_pointer_array = generate_pointer_arrays(num_teams)
-	score_array = np.array([4,8,16,32])
+	if score_array is None:
+		score_array = np.array([4,8,16,32])
 
 	max_games_per_team = int(np.log2(num_teams))
 	total_games = num_teams - 1
@@ -76,13 +77,13 @@ def load_outcome_matrix(dir_path, num_teams=16):
 
 	return outcome_matrix
 
-def load_or_generate_outcome_matrix(dir_path, num_teams=16, force_generation=False):
+def load_or_generate_outcome_matrix(dir_path, num_teams=16, score_array=None, force_generation=False):
 	try:
 		assert not force_generation
 		outcome_matrix = load_outcome_matrix(dir_path, num_teams)
 	except:
 		print('Failed to load outcome matrix -- generating and saving a new outcome matrix')
-		outcome_matrix = generate_outcome_matrix(num_teams)
+		outcome_matrix = generate_outcome_matrix(num_teams, score_array)
 		save_outcome_matrix(dir_path, outcome_matrix, num_teams=16)
 	finally:
 		return outcome_matrix

@@ -128,7 +128,7 @@ def print_sweet_16_case_probabilities(bracket_index, bracket_matrix, bracket_poo
     sweet_16_case_probabilities_dict = {}
     for i in range(0,16,2):
         # pdb.set_trace()
-        team_0_wins = paths[:,paths[i * 4,:] == 4]
+        team_0_wins = paths[:,paths[i * 4,:] != 0]
         if team_0_wins.size:
             team_0_win_count = team_0_wins.shape[1]
         else:
@@ -140,7 +140,7 @@ def print_sweet_16_case_probabilities(bracket_index, bracket_matrix, bracket_poo
         ))
         sweet_16_case_probabilities_dict[team_name_dict[i]] = team_0_win_count
 
-        team_1_wins = paths[:,paths[(i + 1) * 4,:] == 4]
+        team_1_wins = paths[:,paths[(i + 1) * 4,:] != 0]
         if team_1_wins.size:
             team_1_win_count = team_1_wins.shape[1]
         else:

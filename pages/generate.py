@@ -123,7 +123,7 @@ def unzip_pool_pdfs(uploaded_zip_file, force_generation):
         print(file_details)
         print(uploaded_zip_file)
 
-        zip_filepath = upload_folder().joinpath(uploaded_zip_file.name)
+        zip_filepath = static_path().joinpath(uploaded_zip_file.name)
         if zip_filepath.exists() and force_generation:
             zip_filepath.unlink()
         print(zip_filepath)

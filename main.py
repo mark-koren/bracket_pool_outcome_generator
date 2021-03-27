@@ -5,6 +5,7 @@ import streamlit as st
 import pandas as pd
 import shutil
 import pickle
+import numpy as np
 
 from pages.introduction import introduction
 from pages.generate import generate
@@ -47,6 +48,12 @@ if uploaded_bracket_pool_data is not None:
     bracket_list, bracket_matrix, current_score_array, df_bracket_pool = unpack_bracket_pool_data(
         uploaded_bracket_pool_data)
 
+score_type = st.sidebar.selectbox('Scoring Mode:', ('CBS (32 points per round)', 'ESPN (320 points per round)'))
+if score_type == 'CBS (32 points per round)':
+    score_array = np.array([4, 8, 16, 32])
+else:
+    score_array = np.array([40, 80, 160, 320])
+
 if st.sidebar.button('CLEAR ALL DATA (WARNING - CAN NOT BE UNDONE!)'):
     for filename in possible_files_names:
         temp_path = static_path() / filename
@@ -63,6 +70,6 @@ if page == '1. Introduction':
 elif page == '2. Generate':
     generate()
 elif page == '3. Pool Overview':
-    pool_overview(bracket_list, bracket_matrix, current_score_array, df_bracket_pool)
+    pool_overview(bracket_list, bracket_matrix, current_score_array, df_bracket_pool, score_array)
 elif page == '4. Individual Brackets':
-    individual_brackets(bracket_list, bracket_matrix, current_score_array, df_bracket_pool)
+    individual_brackets(bracket_list, bracket_matrix, current_score_array, df_bracket_pool, score_array)

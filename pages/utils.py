@@ -111,8 +111,9 @@ game_type_dict = {
 }
 
 @st.cache
-def get_outcome_matrix():
-    outcome_matrix = load_or_generate_outcome_matrix(static_path(), num_teams=16, force_generation=False)
+def get_outcome_matrix(score_array):
+    outcome_matrix = load_or_generate_outcome_matrix(static_path(), num_teams=16, score_array=score_array, force_generation=True)
+    # print(outcome_matrix)
     return outcome_matrix
 
 def page_header():
@@ -134,12 +135,16 @@ def markdown_file_downloader(text, link_text, download_path):
 
 def upload_folder():
     UPLOAD_FOLDER = Path.cwd().joinpath('data')
+    if not UPLOAD_FOLDER.is_dir():
+        UPLOAD_FOLDER.mkdir()
     return UPLOAD_FOLDER
 
 # HACK This only works when we've installed streamlit with pipenv, so the
 # permissions during install are the same as the running process
 def static_path():
     STREAMLIT_STATIC_PATH = Path(st.__path__[0]) / 'static'
+    if not STREAMLIT_STATIC_PATH.is_dir():
+        STREAMLIT_STATIC_PATH.mkdir()
     return STREAMLIT_STATIC_PATH
 # We create a downloads directory within the streamlit static asset directory
 # and we write output files to it
