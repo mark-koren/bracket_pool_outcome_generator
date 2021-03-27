@@ -119,7 +119,7 @@ def page_header():
     st.title('So you\'re saying there\'s a chance!?!')
     st.header('Bracket pool outcome generator')
     st.subheader('By: Mark Koren')
-    # st.markdown('[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/L4L242M4H)')
+    st.markdown('[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/L4L242M4H)')
 
 def save_uploadedfile(uploadedfile, save_destination):
     with save_destination.open('wb') as f:
