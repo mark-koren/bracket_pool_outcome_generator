@@ -3,12 +3,12 @@ Bracket pool outcome generator
 
 Install:
 
-Install python 3, then: \
+Install python 3, then from the command line: \
 pip install -r requirements.txt
 
-To run the app: \
+To run the app, from the command line: \
 streamlit run main.py
 
 Then navigate to the following address in your internet browser: \
-http://localhost:8502/
+http://localhost:8501/
 
