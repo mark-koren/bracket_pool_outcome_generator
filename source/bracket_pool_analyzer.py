@@ -118,7 +118,14 @@ def print_money_paths_for_index(bracket_index, bracket_matrix, bracket_pool_scor
 
 def print_sweet_16_case_probabilities(bracket_index, bracket_matrix, bracket_pool_scores, outcome_matrix):
     max_value_per_case = np.amax(bracket_pool_scores, axis=0)
-    paths = outcome_matrix[:, bracket_pool_scores[bracket_index, :] == max_value_per_case]
+    print(max_value_per_case.shape)
+    print(bracket_pool_scores[bracket_index, :] == max_value_per_case)
+    print((bracket_pool_scores[bracket_index, :] == max_value_per_case).shape)
+    print(outcome_matrix.shape)
+    paths = outcome_matrix[:, (bracket_pool_scores[bracket_index, :] == max_value_per_case)[0]]
+    total_outcomes = outcome_matrix.shape[1]
+
+    sweet_16_case_probabilities_dict = {}
     for i in range(0,16,2):
         # pdb.set_trace()
         team_0_wins = paths[:,paths[i * 4,:] == 4]
@@ -129,8 +136,9 @@ def print_sweet_16_case_probabilities(bracket_index, bracket_matrix, bracket_poo
         print('Win paths left if {team_name} wins: {win_count} ({win_percent:.2f}%)'.format(
             team_name=team_name_dict[i],
             win_count=team_0_win_count,
-            win_percent=team_0_win_count/32768*100,
+            win_percent=team_0_win_count/total_outcomes*100,
         ))
+        sweet_16_case_probabilities_dict[team_name_dict[i]] = team_0_win_count
 
         team_1_wins = paths[:,paths[(i + 1) * 4,:] == 4]
         if team_1_wins.size:
@@ -140,8 +148,11 @@ def print_sweet_16_case_probabilities(bracket_index, bracket_matrix, bracket_poo
         print('Win paths left if {team_name} wins: {win_count} ({win_percent:.2f}%)'.format(
             team_name=team_name_dict[(i + 1)],
             win_count=team_1_win_count,
-            win_percent=team_1_win_count/32768*100,
+            win_percent=team_1_win_count/total_outcomes*100,
         ))
+        sweet_16_case_probabilities_dict[team_name_dict[(i + 1)]] = team_1_win_count
+
+    return sweet_16_case_probabilities_dict
 
 if __name__ == '__main__':
     num_teams = 16

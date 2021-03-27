@@ -5,6 +5,7 @@ from pathlib import Path
 import csv
 import pickle
 from string import digits
+import pandas as pd
 
 from pdfminer.layout import LAParams, LTTextBox, LTTextLine
 from pdfminer.pdfdocument import PDFDocument
@@ -14,6 +15,7 @@ from pdfminer.pdfparser import PDFParser
 from pdfminer.converter import PDFPageAggregator
 
 from source.utils import generate_round_array
+
 
 winner_locations_CBS = {
     0 :[212, 428],
@@ -175,40 +177,149 @@ def get_bracket_array(bracket_dict):
     # return bracket_array.astype(int)
     return bracket_array.reshape((1,-1)).astype(int)
 
+# def generate_bracket_data_from_df(df_bracket_info):
+#     bracket_matrix = np.array([], dtype=np.int64).reshape(0, 64)
+#     current_score_array = np.array([], dtype=np.int64).reshape(0, 1)
+#     # score_dict = get_score_dict_from_directory(dir_path)
+#     bracket_list = []
+#
+#     for row in df_bracket_info:
+#         try:
+#             bracket_dict = get_bracket_dict(pdf_file, pool_type=pool_type)
+#             bracket_name = pdf_file.stem
+#             bracket_array = get_bracket_array(bracket_dict)
+#
+#             bracket_info = {'name': bracket_name,
+#                             'idx': bracket_idx,
+#                             'current_score': score_dict[bracket_name],
+#                             'bracket_array': bracket_array}
+#             bracket_list.append(bracket_info
+#                                 )
+#             bracket_matrix = np.vstack([bracket_matrix, bracket_array])
+#             current_score_array = np.vstack([current_score_array, np.array(score_dict[bracket_name])])
+#
+#
+#         except:
+#             print('Failed to create bracket for ', pdf_file.name)
+#             pdb.set_trace()
+#             continue
+#
+#     return bracket_list, bracket_matrix, current_score_array
+
+def generate_bracket_df_from_directory(dir_path, pool_type='CBS', progress_bar = None):
+    dirpath = Path(dir_path)
+    assert (dirpath.is_dir())
+
+    bracket_list = []
+    bracket_pool_dict = {'name':[],
+                         'idx':[],
+                         'current_score':[],
+                         0:[],1:[],2:[],3:[],4:[],5:[],6:[],7:[],8:[],9:[],10:[],11:[],12:[],13:[],14:[]}
+    # df_bracket_pool = pd.DataFrame(columns=['idx', 'name', 'current_score', 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14])
+    try:
+        score_dict = get_score_dict_from_directory(dir_path, mode='df')
+    except:
+        score_dict = None
+
+    pdf_files = dirpath.glob('*.pdf')
+    if progress_bar is not None:
+        num_files = 0
+        for _ in pdf_files:
+            num_files += 1
+    print(num_files)
+    pdf_files = dirpath.glob('*.pdf')
+    for bracket_idx, pdf_file in enumerate(pdf_files):
+        try:
+            bracket_dict = get_bracket_dict(pdf_file, pool_type=pool_type)
+            bracket_name = pdf_file.stem
+            if score_dict is None:
+                bracket_score = 0
+            else:
+                bracket_score = score_dict[bracket_name]
+
+            bracket_pool_dict['name'].append(bracket_name)
+            bracket_pool_dict['idx'].append(bracket_idx)
+            bracket_pool_dict['current_score'].append(bracket_score)
+            for key in bracket_dict.keys():
+                bracket_pool_dict[key].append(bracket_dict[key])
+
+        except:
+            print('Failed to create bracket for ', pdf_file.name)
+            pdb.set_trace()
+            continue
+
+        if progress_bar is not None:
+            progress_bar((bracket_idx + 1.0) / num_files)
+
+    return pd.DataFrame.from_dict(bracket_pool_dict)
+
+
 def generate_bracket_data_from_directory(dir_path, pool_type='CBS'):
-        dirpath = Path(dir_path)
-        assert (dirpath.is_dir())
+    dirpath = Path(dir_path)
+    assert (dirpath.is_dir())
 
-        bracket_matrix = np.array([], dtype=np.int64).reshape(0,64)
-        current_score_array = np.array([], dtype=np.int64).reshape(0,1)
-        score_dict = get_score_dict_from_directory(dir_path)
-        bracket_list = []
+    bracket_matrix = np.array([], dtype=np.int64).reshape(0,64)
+    current_score_array = np.array([], dtype=np.int64).reshape(0,1)
+    score_dict = get_score_dict_from_directory(dir_path)
+    bracket_list = []
 
-        pdf_files = dirpath.glob('*.pdf')
-        for bracket_idx, pdf_file in enumerate(pdf_files):
-            try:
-                bracket_dict = get_bracket_dict(pdf_file, pool_type=pool_type)
-                bracket_name = pdf_file.stem
-                if bracket_name == 'sue_koren':
-                    bracket_dict[14] = 'gonzaga'
-                bracket_array = get_bracket_array(bracket_dict)
+    pdf_files = dirpath.glob('*.pdf')
+    for bracket_idx, pdf_file in enumerate(pdf_files):
+        try:
+            bracket_dict = get_bracket_dict(pdf_file, pool_type=pool_type)
+            bracket_name = pdf_file.stem
+            bracket_array = get_bracket_array(bracket_dict)
 
-                bracket_info = {'name': bracket_name,
-                                'idx': bracket_idx,
-                                'current_score': score_dict[bracket_name],
-                                'bracket_array':  bracket_array}
-                bracket_list.append(bracket_info
-                                    )
-                bracket_matrix = np.vstack([bracket_matrix, bracket_array])
-                current_score_array = np.vstack([current_score_array, np.array(score_dict[bracket_name])])
+            bracket_info = {'name': bracket_name,
+                            'idx': bracket_idx,
+                            'current_score': score_dict[bracket_name],
+                            'bracket_array':  bracket_array}
+            bracket_list.append(bracket_info
+                                )
+            bracket_matrix = np.vstack([bracket_matrix, bracket_array])
+            current_score_array = np.vstack([current_score_array, np.array(score_dict[bracket_name])])
 
 
-            except:
-                print('Failed to create bracket for ', pdf_file.name)
-                pdb.set_trace()
-                continue
+        except:
+            print('Failed to create bracket for ', pdf_file.name)
+            pdb.set_trace()
+            continue
 
-        return bracket_list, bracket_matrix, current_score_array
+    return bracket_list, bracket_matrix, current_score_array
+
+def generate_bracket_data_from_df(df_bracket_pool):
+    bracket_matrix = np.array([], dtype=np.int64).reshape(0, 64)
+    current_score_array = np.array([], dtype=np.int64).reshape(0, 1)
+    bracket_list = []
+    game_cols = [x for x in range(15)]
+
+    for index, row in df_bracket_pool.iterrows():
+        try:
+            bracket_dict = row.loc[game_cols].to_dict()
+            bracket_name = row['name']
+            current_score = row['current_score']
+            bracket_array = get_bracket_array(bracket_dict)
+
+            bracket_info = {'name': bracket_name,
+                            'idx': row['idx'],
+                            'current_score': current_score,
+                            'bracket_array': bracket_array}
+            bracket_list.append(bracket_info
+                                )
+            bracket_matrix = np.vstack([bracket_matrix, bracket_array])
+            current_score_array = np.vstack([current_score_array, np.array(current_score)])
+
+
+        except:
+            print('Failed to create bracket for ', bracket_name)
+            pdb.set_trace()
+            continue
+
+    return bracket_list, bracket_matrix, current_score_array
+
+def create_empty_score_csv_from_df(df_bracket_pool):
+    df_scores = df_bracket_pool[['name', 'current_score']].copy()
+    return df_scores
 
 def create_empty_score_csv_from_directory(dir_path):
     dirpath = Path(dir_path)
@@ -224,6 +335,11 @@ def create_empty_score_csv_from_directory(dir_path):
 
     return csv_file
 
+def get_score_dict_from_df_csv(df_csv_file):
+    df_scores = pd.read_csv(df_csv_file, index_col=0)
+    df_scores = df_scores.set_index('name')
+    return df_scores.to_dict()['current_score']
+
 def get_score_dict_from_csv(csv_file):
     score_dict = {}
     with csv_file.open("r", encoding="utf-8") as file:
@@ -234,11 +350,14 @@ def get_score_dict_from_csv(csv_file):
 
     return score_dict
 
-def get_score_dict_from_directory(dir_path):
+def get_score_dict_from_directory(dir_path, mode='csv'):
     dirpath = Path(dir_path)
     assert (dirpath.is_dir())
     csv_file = dirpath / 'current_scores.csv'
-    return get_score_dict_from_csv(csv_file)
+    if mode == 'df':
+        return get_score_dict_from_df_csv(csv_file)
+    else:
+        return get_score_dict_from_csv(csv_file)
 
 def save_bracket_data(bracket_dir_path, bracket_list, bracket_matrix, current_score_array):
     dirpath = Path(bracket_dir_path)
@@ -302,6 +421,19 @@ def load_or_generate_bracket_data(bracket_dir_path, pool_type='CBS', force_gener
     except:
         print('Failed to load bracket pool data -- generating and saving new bracket pool data')
         bracket_list, bracket_matrix, current_score_array = generate_bracket_data_from_directory(bracket_dir_path, pool_type=pool_type)
+        save_bracket_data(bracket_dir_path, bracket_list, bracket_matrix, current_score_array)
+    finally:
+        return bracket_list, bracket_matrix, current_score_array
+
+def load_or_generate_bracket_data_from_df(bracket_dir_path, force_generation=False):
+    try:
+        print(force_generation)
+        assert not force_generation
+        bracket_list, bracket_matrix, current_score_array = load_bracket_data(bracket_dir_path)
+    except:
+        print('Failed to load bracket pool data -- generating and saving new bracket pool data')
+        bracket_list, bracket_matrix, current_score_array = generate_bracket_data_from_df(bracket_dir_path,
+                                                                                                 pool_type=pool_type)
         save_bracket_data(bracket_dir_path, bracket_list, bracket_matrix, current_score_array)
     finally:
         return bracket_list, bracket_matrix, current_score_array
