@@ -6,7 +6,7 @@ from pathlib import Path
 import pickle
 
 # from bracket_pdf_parser import *
-from source.utils import generate_round_array, generate_pointer_arrays
+from source.utils import generate_round_array, generate_pointer_arrays, win_likelihood_538, team_ratings_538
 
 # def generate_bracket_from_dict(num_teams):
 # 	max_games_per_team = np.log2(num_teams)
@@ -37,12 +37,16 @@ def generate_outcome_matrix(num_teams, score_array=None):
 
 	# Create everything using generators
 	row_list = []
+	likelihood_list = []
+	team_ratings = team_ratings_538
 	for truthtable_row in tqdm(bracket_truth_table_generator(num_teams), total=2**total_games):
-		outcome_row = generate_outcome_row(num_teams, total_games, max_games_per_team, truthtable_row, round_array,
-										   round_pointer_array, game_pointer_array, score_array)
+		outcome_row, outcome_likelihood = generate_outcome_row(num_teams, total_games, max_games_per_team, truthtable_row, round_array,
+										   round_pointer_array, game_pointer_array, score_array, team_ratings)
 		row_list.append(outcome_row.reshape((-1,1)))
+		likelihood_list.append(outcome_likelihood)
 
 	outcome_matrix = np.hstack(row_list)
+	likelihood_array = np.hstack(likelihood_list)
 	# This  was the preallocation method
 	# bracket_truth_table = generate_bracket_truth_table(num_teams)
 	#
@@ -56,54 +60,72 @@ def generate_outcome_matrix(num_teams, score_array=None):
 	# 	outcome_matrix[row, :] = outcome_row.reshape((1,-1))
 	# print(game_outcome_array)
 	# print(outcome_row)
-	return outcome_matrix
+	return outcome_matrix, likelihood_array
 
-def save_outcome_matrix(dir_path, outcome_matrix, num_teams=16):
+def save_outcome_matrix(dir_path, outcome_matrix, likelihood_array, num_teams=16):
 	dirpath = Path(dir_path)
 	assert (dirpath.is_dir())
+	
 	outcome_matrix_filename = 'outcome_matrix_' + str(num_teams) + '.pkl'
 	outcome_matrix_path = dirpath / outcome_matrix_filename
 	with outcome_matrix_path.open('wb') as file:
 		pickle.dump(outcome_matrix, file)
 
+	likelihood_array_filename = 'likelihood_array_' + str(num_teams) + '.pkl'
+	likelihood_array_path = dirpath / likelihood_array_filename
+	with likelihood_array_path.open('wb') as file:
+		pickle.dump(likelihood_array, file)
+
 def load_outcome_matrix(dir_path, num_teams=16):
 	dirpath = Path(dir_path)
 	assert (dirpath.is_dir())
+	
 	outcome_matrix_filename = 'outcome_matrix_' + str(num_teams) + '.pkl'
 	outcome_matrix_path = dirpath / outcome_matrix_filename
 	assert outcome_matrix_path.is_file()
 	with outcome_matrix_path.open('rb') as file:
 		outcome_matrix = pickle.load(file)
+		
+	likelihood_array_filename = 'likelihood_array_' + str(num_teams) + '.pkl'
+	likelihood_array_path = dirpath / likelihood_array_filename
+	assert likelihood_array_path.is_file()
+	with likelihood_array_path.open('rb') as file:
+		likelihood_array = pickle.load(file)
 
-	return outcome_matrix
+	return outcome_matrix, likelihood_array
 
 def load_or_generate_outcome_matrix(dir_path, num_teams=16, score_array=None, force_generation=False):
 	try:
 		assert not force_generation
-		outcome_matrix = load_outcome_matrix(dir_path, num_teams)
+		outcome_matrix, likelihood_array = load_outcome_matrix(dir_path, num_teams)
 	except:
 		print('Failed to load outcome matrix -- generating and saving a new outcome matrix')
-		outcome_matrix = generate_outcome_matrix(num_teams, score_array)
-		save_outcome_matrix(dir_path, outcome_matrix, num_teams=16)
+		outcome_matrix, likelihood_array = generate_outcome_matrix(num_teams, score_array)
+		save_outcome_matrix(dir_path, outcome_matrix, likelihood_array, num_teams=16)
 	finally:
-		return outcome_matrix
+		return outcome_matrix, likelihood_array
 
-def generate_outcome_row(num_teams, total_games, max_games_per_team, game_outcome_array, round_array, round_pointer_array, game_pointer_array, score_array):
+def generate_outcome_row(num_teams, total_games, max_games_per_team, game_outcome_array, round_array, round_pointer_array, game_pointer_array, score_array, team_ratings):
 	winner_tracker = np.arange(num_teams).astype(int)
 	team_score_row = np.zeros((num_teams, max_games_per_team)).astype(int)
-
+	total_likelihood = 1
 	for i in range(total_games):
 		# pdb.set_trace()
 		round_pointer = round_pointer_array[i]
 		game_pointer = game_pointer_array[i]
 		winner_tracker_index = game_outcome_array[i] + 2 * (i - game_pointer) + round_pointer
+		loser_tracker_index = (1 - game_outcome_array[i]) + 2 * (i - game_pointer) + round_pointer
+		winner_rating = team_ratings[winner_tracker_index]
+		loser_rating = team_ratings[loser_tracker_index]
+		win_likelihood = win_likelihood_538(winner_rating, loser_rating)
+		total_likelihood = total_likelihood * win_likelihood
 		team_index = winner_tracker[winner_tracker_index]
 		winner_tracker[i] = team_index
 		team_score_row[team_index, round_array[i]] = score_array[round_array[i]]
 		# print(i)
 		# pdb.set_trace()
 
-	return team_score_row
+	return team_score_row, total_likelihood
 
 
 
@@ -113,7 +135,7 @@ if __name__ == '__main__':
 	num_teams = 16
 	pdb.set_trace()
 	truth_table = generate_bracket_truth_table(num_teams)
-	outcome_matrix = load_or_generate_outcome_matrix('../', num_teams, force_generation=False)
+	outcome_matrix, likelihood_array = load_or_generate_outcome_matrix('../', num_teams, force_generation=False)
 	pdb.set_trace()
 	print('done')
 	# load_outcome_matrix('./', num_teams=16)

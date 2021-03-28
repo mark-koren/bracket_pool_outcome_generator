@@ -25,7 +25,7 @@ def pool_overview(bracket_list, bracket_matrix, current_score_array, df_bracket_
     if bracket_list is not None and bracket_matrix is not None and current_score_array is not None:
         st.header('3.0 Bracket Pool Results')
 
-        outcome_matrix = get_outcome_matrix(score_array)
+        outcome_matrix, likelihood_array = get_outcome_matrix(score_array)
         # print(outcome_matrix)
         selected_outcome_matrix = outcome_matrix.copy()
         data_mode = st.selectbox('What do you want to do with the bracket pool data?',
@@ -98,7 +98,10 @@ def pool_overview(bracket_list, bracket_matrix, current_score_array, df_bracket_
 
                     print(selected_outcome_matrix.shape)
 
-                    selected_outcome_matrix = selected_outcome_matrix[:, selected_outcome_matrix[winner_idx, :] == winner_value]
+                    selected_outcomes = selected_outcome_matrix[winner_idx, :] == winner_value
+                    likelihood_array = likelihood_array[selected_outcomes]
+                    selected_outcome_matrix = selected_outcome_matrix[:, selected_outcomes]
+
                     print(selected_outcome_matrix.shape)
 
 
@@ -106,7 +109,8 @@ def pool_overview(bracket_list, bracket_matrix, current_score_array, df_bracket_
             bracket_pool_scores = load_or_generate_bracket_pool_scores(static_path, bracket_matrix, selected_outcome_matrix,
                                                                        current_score_array, force_generation=False)
 
-            df_money_chances = print_money_chances(bracket_list, bracket_pool_scores)
+            likelihood_array = likelihood_array / np.sum(likelihood_array)
+            df_money_chances = print_money_chances(bracket_list, bracket_pool_scores, likelihood_array)
         #columns=['first_alone', 'first_tied', 'second_alone', 'second_tied', 'third_alone', 'third_tied']
         total_cases = selected_outcome_matrix.shape[1]
         if total_cases > 0:
@@ -119,12 +123,12 @@ def pool_overview(bracket_list, bracket_matrix, current_score_array, df_bracket_
             df_money_chances_with_percents['third_tied_percent'] = df_money_chances.third_tied / total_cases * 100
 
             df_money_chances_with_percents = df_money_chances_with_percents[['bracket_names',
-                                                                            'first_alone', 'first_alone_percent',
-                                                                            'first_tied', 'first_tied_percent',
-                                                                            'second_alone', 'second_alone_percent',
-                                                                            'second_tied', 'second_tied_percent',
-                                                                            'third_alone', 'third_alone_percent',
-                                                                            'third_tied', 'third_tied_percent', ]]
+                                                                            'first_alone', 'first_alone_percent','first_alone_prob',
+                                                                            'first_tied', 'first_tied_percent','first_tied_prob',
+                                                                            'second_alone', 'second_alone_percent','second_alone_prob',
+                                                                            'second_tied', 'second_tied_percent','second_tied_prob',
+                                                                            'third_alone', 'third_alone_percent','third_alone_prob',
+                                                                            'third_tied', 'third_tied_percent','third_tied_prob', ]]
 
             st.dataframe(df_money_chances_with_percents)
         else:

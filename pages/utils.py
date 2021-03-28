@@ -3,7 +3,7 @@ from pathlib import Path
 
 from source.bracket_outcomes import load_or_generate_outcome_matrix
 
-index_list_2021 = [-1, -1, -1, -1, 0, 0, 1, 1, -1, -1, -1, -1, -1, -1, -1]
+index_list_2021 = [0, -1, -1, -1, 0, 0, 1, 1, -1, -1, -1, -1, -1, -1, -1]
 
 game0_dict = {'name': 'Gonzaga vs Creighton',
               'team0': 'Gonzaga',
@@ -114,9 +114,9 @@ game_type_dict = {
 
 @st.cache
 def get_outcome_matrix(score_array):
-    outcome_matrix = load_or_generate_outcome_matrix(static_path(), num_teams=16, score_array=score_array, force_generation=True)
+    outcome_matrix, likelihood_array = load_or_generate_outcome_matrix(static_path(), num_teams=16, score_array=score_array, force_generation=True)
     # print(outcome_matrix)
-    return outcome_matrix
+    return outcome_matrix, likelihood_array
 
 def page_header():
     st.title('So you\'re saying there\'s a chance!?!')

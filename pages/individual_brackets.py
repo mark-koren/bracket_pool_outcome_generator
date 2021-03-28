@@ -23,7 +23,7 @@ def individual_brackets(bracket_list, bracket_matrix, current_score_array, df_br
     if bracket_list is not None and bracket_matrix is not None and current_score_array is not None:
         st.header('4.0 Individual Brackets')
 
-        outcome_matrix = get_outcome_matrix(score_array)
+        outcome_matrix, likelihood_array = get_outcome_matrix(score_array)
         selected_outcome_matrix = outcome_matrix.copy()
 
         names = df_bracket_pool.sort_values('name').loc[:, 'name'].tolist()
@@ -102,7 +102,10 @@ def individual_brackets(bracket_list, bracket_matrix, current_score_array, df_br
 
                     print(selected_outcome_matrix.shape)
 
-                    selected_outcome_matrix = selected_outcome_matrix[:, selected_outcome_matrix[winner_idx, :] == winner_value]
+                    selected_outcomes = selected_outcome_matrix[winner_idx, :] == winner_value
+                    likelihood_array = likelihood_array[selected_outcomes]
+                    selected_outcome_matrix = selected_outcome_matrix[:, selected_outcomes]
+
                     print(selected_outcome_matrix.shape)
 
         st.subheader('Who should I root for?')
@@ -112,24 +115,64 @@ def individual_brackets(bracket_list, bracket_matrix, current_score_array, df_br
                                                                        current_score_array, force_generation=False)
 
             # df_money_chances = print_money_chances(bracket_list, bracket_pool_scores)
-
-            sweet_16_case_probabilities_dict = print_sweet_16_case_probabilities(bracket_index, bracket_matrix, bracket_pool_scores, selected_outcome_matrix)
+            likelihood_array = likelihood_array / np.sum(likelihood_array)
+            # df_money_chances = print_money_chances(bracket_list, bracket_pool_scores[bracket_index, :], likelihood_array)
+            sweet_16_case_dict = print_sweet_16_case_probabilities(bracket_index, bracket_matrix, bracket_pool_scores, selected_outcome_matrix, likelihood_array)
 
             game = 0
             count_tracker = 0
+            #
+            # team0_dict['win_paths'] = team_0_win_count
+            # team0_dict['win_paths_delta'] = team_0_win_count - base_total_paths
+            # team0_dict['win_percent'] = team_0_win_count / total_outcomes * 100
+            # team0_dict['win_percent_delta'] = team0_dict['win_percent'] - base_paths_percent
+            # team0_dict['win_likelihood'] = np.sum(team_0_likeliood) * 100
+            # team0_dict['win_likelihood_delta'] = team0_dict['win_likelihood'] - base_likelihood
 
-            for key in sweet_16_case_probabilities_dict.keys():
+            # st.write('<p style="color:green">THIS TEXT WILL BE RED</p>', unsafe_allow_html=True)6
+
+            for key in sweet_16_case_dict.keys():
                 if count_tracker == 0:
                     st.subheader('Game {game}: {game_name}'.format(
                         game=game,
                         game_name=all_games_dict[game]['name']
                     ))
-                win_string = 'Win paths left if {team_name} wins: {win_count} ({win_percent:.2f}%)'.format(
-                    team_name=key,
-                    win_count=sweet_16_case_probabilities_dict[key],
-                    win_percent=sweet_16_case_probabilities_dict[key] / total_outcomes * 100,
-                )
+                win_string = 'Win paths left if {team_name} wins: {win_paths} (Change: {win_paths_delta})'.format(
+                        team_name=key,
+                        win_paths=sweet_16_case_dict[key]['win_paths'],
+                        win_paths_delta=sweet_16_case_dict[key]['win_paths_delta'],
+                    )
                 st.write(win_string)
+                if sweet_16_case_dict[key]['win_percent_delta'] > 0:
+                    color = 'green'
+                elif sweet_16_case_dict[key]['win_percent_delta'] < 0:
+                    color = 'red'
+                else:
+                    color = 'black'
+
+                win_string = 'Win path percentages left if {team_name} wins: {win_percent:2f}% (Change: <font style="color:{color}">{win_percent_delta:2f}%</font>)'.format(
+                    team_name=key,
+                    win_percent=sweet_16_case_dict[key]['win_percent'],
+                    win_percent_delta=sweet_16_case_dict[key]['win_percent_delta'],
+                    color=color
+                )
+                # st.write(win_string)
+                print(win_string)
+                st.markdown(win_string, unsafe_allow_html=True)
+                if sweet_16_case_dict[key]['win_likelihood_delta'] > 0:
+                    color = 'green'
+                elif sweet_16_case_dict[key]['win_likelihood_delta'] < 0:
+                    color = 'red'
+                else:
+                    color = 'black'
+                win_string = 'Win likelihood left if {team_name} wins: {win_likelihood:2f}% (Change: <font style="color:{color}">{win_likelihood_delta:2f}%</font>)'.format(
+                    team_name=key,
+                    win_likelihood=sweet_16_case_dict[key]['win_likelihood'],
+                    win_likelihood_delta=sweet_16_case_dict[key]['win_likelihood_delta'],
+                    color=color
+                )
+                print(win_string)
+                st.write(win_string, unsafe_allow_html=True)
                 game += count_tracker
                 if count_tracker == 0:
                     count_tracker = 1

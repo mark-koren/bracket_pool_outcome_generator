@@ -3,6 +3,26 @@ import pdb
 import itertools
 from tqdm import tqdm
 
+team_ratings_538 = {0: 96.71,
+					1: 88.85,
+					2: 89.82,
+					3: 87.39,
+					4: 89.52,
+					5: 88.93,
+					6: 86.95,
+					7: 90.57,
+					8: 94.78,
+					9: 87.75,
+					10: 88.38,
+					11: 76.43,
+					12: 88.6,
+					13: 86.15,
+					14: 86.02,
+					15: 91.94,}
+
+def win_likelihood_538(winner_rating, loser_rating):
+	return 1 / (1 + 10 ** (-(winner_rating - loser_rating) * 30.464 / 400))
+
 def generate_round_pointer_array(num_teams):
 	total_games = num_teams - 1
 	round_pointer_array = np.zeros(total_games)

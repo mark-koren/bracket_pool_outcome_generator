@@ -6,6 +6,7 @@ import pandas as pd
 
 from source.bracket_pdf_parser import load_or_generate_bracket_data
 from source.bracket_outcomes import load_or_generate_outcome_matrix
+from source.utils import win_likelihood_538, team_ratings_538
 
 team_name_dict = {
     0:'gonzaga',
@@ -66,20 +67,30 @@ def load_or_generate_bracket_pool_scores(bracket_dir_path, bracket_matrix, outco
     finally:
         return bracket_pool_scores
 
-def print_money_chances(bracket_list, bracket_pool_scores):
+def print_money_chances(bracket_list, bracket_pool_scores, likelihood_array):
     # df_bracket_pool_scores = pd.DataFrame(data=bracket_pool_scores)
     df_bracket_names = pd.DataFrame([bracket_info['name'] for bracket_info in bracket_list], columns=['bracket_names'])
     # df_bracket_pool_scores = pd.concat([df_bracket_names,df_bracket_pool_scores],axis=1)
     # print(df_bracket_pool_scores.head())
 
+    # Generate matrix of 1s where score is max, 0 if not
     first_place_bracket_pool_scores = bracket_pool_scores.copy()
     first_place_bracket_pool_scores[np.where(np.not_equal(bracket_pool_scores,np.amax(bracket_pool_scores, axis=0)))] = 0
     first_place_bracket_pool_scores[np.where(np.not_equal(first_place_bracket_pool_scores, 0))] = 1
-    
+
+    # Find ties
     first_place_tie_tracker = np.sum(first_place_bracket_pool_scores, axis=0)
+
+    # Find likelihood of each win and sum
+    first_place_bracket_pool_likelihood_matrix = first_place_bracket_pool_scores * likelihood_array
+    first_place_tied_likelihoods = np.sum(first_place_bracket_pool_likelihood_matrix[:, first_place_tie_tracker > 1], axis=1).reshape((-1,1)) * 100
+    first_place_bracket_pool_likelihoods = np.sum(first_place_bracket_pool_likelihood_matrix, axis=1).reshape((-1,1)) * 100 - first_place_tied_likelihoods
+
+    # Find count of each win
     first_place_tied_counts = np.sum(first_place_bracket_pool_scores[:, first_place_tie_tracker > 1], axis=1).reshape(-1,1)
     first_place_no_ties_count = np.sum(first_place_bracket_pool_scores, axis=1).reshape(-1,1) - first_place_tied_counts
 
+    # Generate matrix of 1s where score is max, 0 if not
     second_place_bracket_pool_scores = bracket_pool_scores.copy()
     # Remove 1st place scores from each column
     second_place_bracket_pool_scores[np.where(np.equal(bracket_pool_scores, np.amax(bracket_pool_scores, axis=0)))] = 0
@@ -88,10 +99,21 @@ def print_money_chances(bracket_list, bracket_pool_scores):
     # If two or more tied for first, no one gets second
     second_place_bracket_pool_scores[:, first_place_tie_tracker >= 2] = 0
 
+    # Find ties
     second_place_tie_tracker = np.sum(second_place_bracket_pool_scores, axis=0)
+
+    # Find likelihood of each win and sum
+    second_place_bracket_pool_likelihood_matrix = second_place_bracket_pool_scores * likelihood_array
+    second_place_tied_likelihoods = np.sum(second_place_bracket_pool_likelihood_matrix[:, second_place_tie_tracker > 1],
+                                          axis=1).reshape((-1,1)) * 100
+    second_place_bracket_pool_likelihoods = np.sum(second_place_bracket_pool_likelihood_matrix,
+                                                  axis=1).reshape((-1,1)) * 100 - second_place_tied_likelihoods
+
+    # Find count of each win
     second_place_tied_counts = np.sum(second_place_bracket_pool_scores[:, second_place_tie_tracker > 1], axis=1).reshape(-1,1)
     second_place_no_ties_count = np.sum(second_place_bracket_pool_scores, axis=1).reshape(-1,1) - second_place_tied_counts
 
+    # Generate matrix of 1s where score is max, 0 if not
     third_place_bracket_pool_scores = bracket_pool_scores.copy()
     # Remove 1st place scores from each column
     third_place_bracket_pool_scores[np.where(np.equal(bracket_pool_scores, np.amax(third_place_bracket_pool_scores, axis=0)))] = 0
@@ -104,10 +126,46 @@ def print_money_chances(bracket_list, bracket_pool_scores):
     # If two or more tied for second, no one gets third
     third_place_bracket_pool_scores[:, second_place_tie_tracker >= 2] = 0
 
+    # Find ties
     third_place_tie_tracker = np.sum(third_place_bracket_pool_scores, axis=0)
+
+    # Find likelihood of each win and sum
+    third_place_bracket_pool_likelihood_matrix = third_place_bracket_pool_scores * likelihood_array
+    third_place_tied_likelihoods = np.sum(third_place_bracket_pool_likelihood_matrix[:, third_place_tie_tracker > 1],
+                                           axis=1).reshape((-1,1)) * 100
+    third_place_bracket_pool_likelihoods = np.sum(third_place_bracket_pool_likelihood_matrix,
+                                                   axis=1).reshape((-1,1)) * 100 - third_place_tied_likelihoods
+
+    # Find count of each win
     third_place_tied_counts = np.sum(third_place_bracket_pool_scores[:, third_place_tie_tracker > 1], axis=1).reshape(-1,1)
     third_place_no_ties_count = np.sum(third_place_bracket_pool_scores, axis=1).reshape(-1,1) - third_place_tied_counts
-    df_place_counts = pd.DataFrame(data=np.hstack([first_place_no_ties_count, first_place_tied_counts, second_place_no_ties_count, second_place_tied_counts, third_place_no_ties_count,third_place_tied_counts ]), columns=['first_alone', 'first_tied', 'second_alone', 'second_tied', 'third_alone', 'third_tied'])
+    data_list = [first_place_no_ties_count,
+                 first_place_bracket_pool_likelihoods,
+                 first_place_tied_counts,
+                 first_place_tied_likelihoods,
+                 second_place_no_ties_count,
+                 second_place_bracket_pool_likelihoods,
+                 second_place_tied_counts,
+                 second_place_tied_likelihoods,
+                 third_place_no_ties_count,
+                 third_place_bracket_pool_likelihoods,
+                 third_place_tied_counts,
+                 third_place_tied_likelihoods]
+    # for x in data_list:
+    #     print(x.shape)
+    df_place_counts = pd.DataFrame(data=np.hstack(data_list),
+                                   columns=['first_alone',
+                                            'first_alone_prob',
+                                            'first_tied',
+                                            'first_tied_prob',
+                                            'second_alone',
+                                            'second_alone_prob',
+                                            'second_tied',
+                                            'second_tied_prob',
+                                            'third_alone',
+                                            'third_alone_prob',
+                                            'third_tied',
+                                            'third_tied_prob',])
 
     # pdb.set_trace()
     return pd.concat([df_bracket_names,df_place_counts],axis=1)
@@ -118,17 +176,27 @@ def print_money_paths_for_index(bracket_index, bracket_matrix, bracket_pool_scor
     no_zaga = paths[:,paths[3,:] != 32]
     pdb.set_trace()
 
-def print_sweet_16_case_probabilities(bracket_index, bracket_matrix, bracket_pool_scores, outcome_matrix):
+def print_sweet_16_case_probabilities(bracket_index, bracket_matrix, bracket_pool_scores, outcome_matrix, likelihood_array):
     max_value_per_case = np.amax(bracket_pool_scores, axis=0)
     print(max_value_per_case.shape)
     print(bracket_index)
     paths = outcome_matrix[:, (bracket_pool_scores[bracket_index, :] == max_value_per_case)]
+    likelihoods = likelihood_array[(bracket_pool_scores[bracket_index, :] == max_value_per_case)]
     total_outcomes = outcome_matrix.shape[1]
+    print(paths.shape)
+    print(total_outcomes)
+    base_total_paths = paths.shape[1]
+    base_paths_percent = base_total_paths / total_outcomes * 100
+    base_likelihood = np.sum(likelihoods) * 100
 
-    sweet_16_case_probabilities_dict = {}
+    sweet_16_case_dict = {}
+
     for i in range(0,16,2):
         # pdb.set_trace()
+        team0_dict = {}
         team_0_wins = paths[:,paths[i * 4,:] != 0]
+        team_0_likeliood = likelihoods[paths[i * 4,:] != 0]
+        team_0_win_percent = win_likelihood_538(team_ratings_538[i], team_ratings_538[(i+1)])
         if team_0_wins.size:
             team_0_win_count = team_0_wins.shape[1]
         else:
@@ -138,9 +206,20 @@ def print_sweet_16_case_probabilities(bracket_index, bracket_matrix, bracket_poo
             win_count=team_0_win_count,
             win_percent=team_0_win_count/total_outcomes*100,
         ))
-        sweet_16_case_probabilities_dict[team_name_dict[i]] = team_0_win_count
+        team0_dict['win_paths'] = team_0_win_count
+        team0_dict['win_paths_delta'] = team_0_win_count - base_total_paths
+        team0_dict['win_percent'] = team_0_win_count / (total_outcomes / 2) * 100
+        team0_dict['win_percent_delta'] = team0_dict['win_percent'] - base_paths_percent
+        team0_dict['win_likelihood'] = np.sum(team_0_likeliood) / team_0_win_percent * 100
+        team0_dict['win_likelihood_delta'] = team0_dict['win_likelihood'] - base_likelihood
+        
+        sweet_16_case_dict[team_name_dict[i]] = team0_dict
+
+        team1_dict = {}
 
         team_1_wins = paths[:,paths[(i + 1) * 4,:] != 0]
+        team_1_likeliood = likelihoods[paths[(i + 1) * 4, :] != 0]
+        team_1_win_percent = win_likelihood_538(team_ratings_538[(i + 1)], team_ratings_538[i])
         if team_1_wins.size:
             team_1_win_count = team_1_wins.shape[1]
         else:
@@ -150,15 +229,22 @@ def print_sweet_16_case_probabilities(bracket_index, bracket_matrix, bracket_poo
             win_count=team_1_win_count,
             win_percent=team_1_win_count/total_outcomes*100,
         ))
-        sweet_16_case_probabilities_dict[team_name_dict[(i + 1)]] = team_1_win_count
+        team1_dict['win_paths'] = team_1_win_count
+        team1_dict['win_paths_delta'] = team_1_win_count - base_total_paths
+        team1_dict['win_percent'] = team_1_win_count / (total_outcomes / 2) * 100
+        team1_dict['win_percent_delta'] = team1_dict['win_percent'] - base_paths_percent
+        team1_dict['win_likelihood'] = np.sum(team_1_likeliood) / team_1_win_percent * 100
+        team1_dict['win_likelihood_delta'] = team1_dict['win_likelihood'] - base_likelihood
 
-    return sweet_16_case_probabilities_dict
+        sweet_16_case_dict[team_name_dict[(i + 1)]] = team1_dict
+
+    return sweet_16_case_dict
 
 if __name__ == '__main__':
     num_teams = 16
     data_dir_path = '../'
     bracket_dir_path = '../aj_ellis_co'
-    outcome_matrix = load_or_generate_outcome_matrix(data_dir_path, num_teams)
+    outcome_matrix, likelihood_array = load_or_generate_outcome_matrix(data_dir_path, num_teams)
     bracket_list, bracket_matrix, current_score_array = load_or_generate_bracket_data(bracket_dir_path, force_generation=False)
     # print(bracket_list)
     # print(bracket_matrix)
