@@ -41,10 +41,12 @@ def save_bracket_pool_scores(bracket_dir_path, bracket_pool_scores):
 
 def load_bracket_pool_scores(bracket_dir_path):
     dirpath = Path(bracket_dir_path)
+    print(dirpath.is_dir())
     assert (dirpath.is_dir())
 
     bracket_pool_scores_filename = 'bracket_pool_scores.pkl'
     bracket_pool_scores_path = dirpath / bracket_pool_scores_filename
+    print(bracket_pool_scores_path.is_file())
     assert bracket_pool_scores_path.is_file()
 
     with bracket_pool_scores_path.open('rb') as file:
