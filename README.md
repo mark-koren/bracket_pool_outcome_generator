@@ -10,16 +10,16 @@ git clone https://github.com/mark-koren/bracket_pool_outcome_generator.git
 Or download the zip folder and unzip.
 
 Open command line and change to the folder you just downloaded the repository to.
-![alt text](https://imgur.com/bA6fqJE)
+![alt text](https://imgur.com/bA6fqJE.png)
 
 If you are on windows you may need to install the Microsoft C++ build tools:
 https://visualstudio.microsoft.com/visual-cpp-build-tools/
 
 Now install the python  requirements:
-![alt text](https://imgur.com/pBRXTPv)
+![alt text](https://imgur.com/pBRXTPv.png)
 
 To run the app, from the command line: \
-![alt text](https://imgur.com/B8LJUmC)
+![alt text](https://imgur.com/B8LJUmC.png)
 
 Then navigate to the following address shown in the above command, usually http://localhost:8501/
 
