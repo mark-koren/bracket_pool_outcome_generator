@@ -312,7 +312,8 @@ def generate():
 
 
         if data_mode == 'Edit a Bracket':
-            edit_row_name = st.selectbox('Select a row to edit: ', df_bracket_pool.loc[:, 'name'].tolist())
+            names = df_bracket_pool.sort_values('name').loc[:, 'name'].tolist()
+            edit_row_name = st.selectbox('Select a row to edit: ', names)
             df_edit_row = df_bracket_pool[df_bracket_pool.name == edit_row_name].copy()
             default_bracket_name = df_edit_row.name.values[0]
             default_bracket_score = df_edit_row.current_score.values[0]

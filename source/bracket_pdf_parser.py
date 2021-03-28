@@ -169,7 +169,7 @@ def get_bracket_array(bracket_dict):
     round_array = generate_round_array(16)
     for i in range(15):
         # pdb.set_trace()
-        winning_team = bracket_dict[i]
+        winning_team = bracket_dict[i].lower()
         if winning_team in team_id_dict:
             winning_team_idx = team_id_dict[winning_team]
             bracket_array[winning_team_idx, round_array[i]] = 1

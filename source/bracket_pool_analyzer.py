@@ -121,10 +121,8 @@ def print_money_paths_for_index(bracket_index, bracket_matrix, bracket_pool_scor
 def print_sweet_16_case_probabilities(bracket_index, bracket_matrix, bracket_pool_scores, outcome_matrix):
     max_value_per_case = np.amax(bracket_pool_scores, axis=0)
     print(max_value_per_case.shape)
-    print(bracket_pool_scores[bracket_index, :] == max_value_per_case)
-    print((bracket_pool_scores[bracket_index, :] == max_value_per_case).shape)
-    print(outcome_matrix.shape)
-    paths = outcome_matrix[:, (bracket_pool_scores[bracket_index, :] == max_value_per_case)[0]]
+    print(bracket_index)
+    paths = outcome_matrix[:, (bracket_pool_scores[bracket_index, :] == max_value_per_case)]
     total_outcomes = outcome_matrix.shape[1]
 
     sweet_16_case_probabilities_dict = {}

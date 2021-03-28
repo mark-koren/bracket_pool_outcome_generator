@@ -14,7 +14,7 @@ from source.bracket_pool_analyzer import load_or_generate_bracket_pool_scores, p
 
 from pages.utils import page_header, downloads_path, upload_folder, save_uploadedfile, markdown_file_downloader, \
     static_path, pick_winner_selectbox, all_games_dict, optional_winner_selectbox, game_type_dict, team_id_dict, \
-    get_outcome_matrix
+    get_outcome_matrix, index_list_2021
 from source.utils import generate_round_array
 
 
@@ -41,9 +41,13 @@ def pool_overview(bracket_list, bracket_matrix, current_score_array, df_bracket_
                 game_dict = all_games_dict[i]
                 # winner = optional_winner_selectbox(game_name=game_dict['name'], team0=game_dict['team0'],
                 #                                         team1=game_dict['team1'], i=i, index=2)
+                option_list = [game_dict['team0'], game_dict['team1'], 'None']
+                index = index_list_2021[i]
+                if index == -1:
+                    index = len(option_list) - 1
                 winner = optional_winner_selectbox(game_name=game_dict['name'],
                                                    game_type=game_type_dict[round_array[i]],
-                                                   option_list=[game_dict['team0'], game_dict['team1'], 'None'], i=-1, index=2)
+                                                   option_list=option_list, i=-1, index=index)
                 if winner == 'None':
                     winner = None
                 winner_dict[i] = winner
@@ -71,9 +75,12 @@ def pool_overview(bracket_list, bracket_matrix, current_score_array, df_bracket_
                     else:
                         option_list.append(team1)
                     option_list.append('None')
+                    index = index_list_2021[i]
+                    if index == -1:
+                        index = len(option_list) - 1
                     winner = optional_winner_selectbox(game_name=game_dict['name'].format(team0=team0, team1=team1),
                                                        game_type=game_type_dict[round_array[i]],
-                                                       option_list=option_list, i=-1, index=len(option_list)-1)
+                                                       option_list=option_list, i=-1, index=index)
 
                     if winner == 'None':
                         winner = None

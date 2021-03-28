@@ -13,7 +13,7 @@ from source.bracket_pool_analyzer import load_or_generate_bracket_pool_scores, p
     print_sweet_16_case_probabilities
 
 from pages.utils import page_header, downloads_path, upload_folder, save_uploadedfile, markdown_file_downloader, \
-    static_path, all_games_dict, optional_winner_selectbox, game_type_dict, team_id_dict, get_outcome_matrix
+    static_path, all_games_dict, optional_winner_selectbox, game_type_dict, team_id_dict, get_outcome_matrix, index_list_2021
 from source.utils import generate_round_array
 
 
@@ -26,9 +26,11 @@ def individual_brackets(bracket_list, bracket_matrix, current_score_array, df_br
         outcome_matrix = get_outcome_matrix(score_array)
         selected_outcome_matrix = outcome_matrix.copy()
 
-        bracket_name = st.selectbox('Select a row to edit: ', df_bracket_pool.loc[:, 'name'].tolist())
+        names = df_bracket_pool.sort_values('name').loc[:, 'name'].tolist()
+        bracket_name = st.selectbox('Select a row to edit: ', names)
+        print(bracket_name)
         df_bracket = df_bracket_pool[df_bracket_pool['name'] == bracket_name].copy()
-        bracket_index = df_bracket['idx']
+        bracket_index = df_bracket['idx'].values[0]
 
         data_mode = st.selectbox('What do you want to do with the bracket pool data?',
                                  ['Inspect Data', 'Look at Scenarios'])
@@ -43,9 +45,13 @@ def individual_brackets(bracket_list, bracket_matrix, current_score_array, df_br
                 game_dict = all_games_dict[i]
                 # winner = optional_winner_selectbox(game_name=game_dict['name'], team0=game_dict['team0'],
                 #                                         team1=game_dict['team1'], i=i, index=2)
+                option_list = [game_dict['team0'], game_dict['team1'], 'None']
+                index = index_list_2021[i]
+                if index == -1:
+                    index = len(option_list) - 1
                 winner = optional_winner_selectbox(game_name=game_dict['name'],
                                                    game_type=game_type_dict[round_array[i]],
-                                                   option_list=[game_dict['team0'], game_dict['team1'], 'None'], i=-1, index=2)
+                                                   option_list=option_list, i=-1, index=index)
                 if winner == 'None':
                     winner = None
                 winner_dict[i] = winner
@@ -73,9 +79,12 @@ def individual_brackets(bracket_list, bracket_matrix, current_score_array, df_br
                     else:
                         option_list.append(team1)
                     option_list.append('None')
+                    index = index_list_2021[i]
+                    if index == -1:
+                        index = len(option_list) - 1
                     winner = optional_winner_selectbox(game_name=game_dict['name'].format(team0=team0, team1=team1),
                                                        game_type=game_type_dict[round_array[i]],
-                                                       option_list=option_list, i=-1, index=len(option_list)-1)
+                                                       option_list=option_list, i=-1, index=index)
 
                     if winner == 'None':
                         winner = None
