@@ -1,8 +1,13 @@
 # bracket_pool_outcome_generator
 Bracket pool outcome generator
 
-# Installation Instructions
+# NEW! THE APP IS LIVE AT share.streamlit.io
 
+You no longer need to install anything! You can use the app at:
+https://share.streamlit.io/mark-koren/bracket_pool_outcome_generator/main/main.py
+
+# Installation Instructions (NO LONGER NECESSARY)
+If you still want to install and launch locally:
 ## Windows:
 
 1. Install [Python 3](https://www.python.org/downloads/), then open up [command line](https://www.computerhope.com/issues/chusedos.htm).
