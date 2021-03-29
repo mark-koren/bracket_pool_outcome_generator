@@ -3,7 +3,30 @@ from pathlib import Path
 
 from source.bracket_outcomes import load_or_generate_outcome_matrix
 
-index_list_2021 = [0, -1, -1, -1, 0, 0, 1, 1, -1, -1, -1, -1, -1, -1, -1]
+index_list_2021 = [0, 0, 0, 0, 0, 0, 1, 1, -1, -1, -1, -1, -1, -1, -1]
+
+game0_dict = {'name': 'Gonzaga vs USC',
+              'team0': 0,
+              'team1': 2}
+
+game1_dict = {'name': 'Michigan vs UCLA',
+              'team0': 4,
+              'team1': 6}
+
+game2_dict = {'name': 'Baylor vs Arkansas',
+              'team0': 8,
+              'team1': 10}
+
+game3_dict = {'name': 'Oregon St. vs Houston',
+              'team0': 13,
+              'team1': 15}
+
+elite_8_dict = {0: game0_dict,
+                1: game1_dict,
+                2: game2_dict,
+                3: game3_dict,}
+
+
 
 game0_dict = {'name': 'Gonzaga vs Creighton',
               'team0': 'Gonzaga',

@@ -4,6 +4,7 @@ from pathlib import Path
 import pickle
 import pandas as pd
 
+from pages.utils import elite_8_dict
 from source.bracket_pdf_parser import load_or_generate_bracket_data
 from source.bracket_outcomes import load_or_generate_outcome_matrix
 from source.utils import win_likelihood_538, team_ratings_538
@@ -239,6 +240,78 @@ def print_sweet_16_case_probabilities(bracket_index, bracket_matrix, bracket_poo
         sweet_16_case_dict[team_name_dict[(i + 1)]] = team1_dict
 
     return sweet_16_case_dict
+
+
+def print_elite_8_case_probabilities(bracket_index, bracket_matrix, bracket_pool_scores, outcome_matrix,
+                                      likelihood_array):
+    max_value_per_case = np.amax(bracket_pool_scores, axis=0)
+    print(max_value_per_case.shape)
+    print(bracket_index)
+    paths = outcome_matrix[:, (bracket_pool_scores[bracket_index, :] == max_value_per_case)]
+    likelihoods = likelihood_array[(bracket_pool_scores[bracket_index, :] == max_value_per_case)]
+    total_outcomes = outcome_matrix.shape[1]
+    print(paths.shape)
+    print(paths[:,0].reshape((16,-1)))
+    print(paths[:,1].reshape((16, -1)))
+    print(total_outcomes)
+    base_total_paths = paths.shape[1]
+    base_paths_percent = base_total_paths / total_outcomes * 100
+    base_likelihood = np.sum(likelihoods) * 100
+
+    elite_8_case_dict = {}
+
+    for i in range(0, 4):
+        # pdb.set_trace()
+        game_dict = elite_8_dict[i]
+        team_0_idx = game_dict['team0']
+        team_1_idx = game_dict['team1']
+
+        team0_dict = {}
+        team_0_wins = paths[:, paths[(team_0_idx * 4) + 1, :] != 0]
+        team_0_likeliood = likelihoods[paths[(team_0_idx * 4) + 1, :] != 0]
+        team_0_win_percent = win_likelihood_538(team_ratings_538[team_0_idx], team_ratings_538[team_1_idx])
+        if team_0_wins.size:
+            team_0_win_count = team_0_wins.shape[1]
+        else:
+            team_0_win_count = 0
+        print('Win paths left if {team_name} wins: {win_count} ({win_percent:.2f}%)'.format(
+            team_name=team_name_dict[team_0_idx],
+            win_count=team_0_win_count,
+            win_percent=team_0_win_count / total_outcomes * 100,
+        ))
+        team0_dict['win_paths'] = team_0_win_count
+        team0_dict['win_paths_delta'] = team_0_win_count - base_total_paths
+        team0_dict['win_percent'] = team_0_win_count / (total_outcomes / 2) * 100
+        team0_dict['win_percent_delta'] = team0_dict['win_percent'] - base_paths_percent
+        team0_dict['win_likelihood'] = np.sum(team_0_likeliood) / team_0_win_percent * 100
+        team0_dict['win_likelihood_delta'] = team0_dict['win_likelihood'] - base_likelihood
+
+        elite_8_case_dict[team_name_dict[team_0_idx]] = team0_dict
+
+        team1_dict = {}
+
+        team_1_wins = paths[:, paths[(team_1_idx * 4) + 1, :] != 0]
+        team_1_likeliood = likelihoods[paths[(team_1_idx * 4) + 1, :] != 0]
+        team_1_win_percent = win_likelihood_538(team_ratings_538[team_1_idx], team_ratings_538[team_0_idx])
+        if team_1_wins.size:
+            team_1_win_count = team_1_wins.shape[1]
+        else:
+            team_1_win_count = 0
+        print('Win paths left if {team_name} wins: {win_count} ({win_percent:.2f}%)'.format(
+            team_name=team_name_dict[team_1_idx],
+            win_count=team_1_win_count,
+            win_percent=team_1_win_count / total_outcomes * 100,
+        ))
+        team1_dict['win_paths'] = team_1_win_count
+        team1_dict['win_paths_delta'] = team_1_win_count - base_total_paths
+        team1_dict['win_percent'] = team_1_win_count / (total_outcomes / 2) * 100
+        team1_dict['win_percent_delta'] = team1_dict['win_percent'] - base_paths_percent
+        team1_dict['win_likelihood'] = np.sum(team_1_likeliood) / team_1_win_percent * 100
+        team1_dict['win_likelihood_delta'] = team1_dict['win_likelihood'] - base_likelihood
+
+        elite_8_case_dict[team_name_dict[team_1_idx]] = team1_dict
+
+    return elite_8_case_dict
 
 if __name__ == '__main__':
     num_teams = 16
